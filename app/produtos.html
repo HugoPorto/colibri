@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Colibri 1.0.0</title>
+    <meta charset="utf-8">
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="photon/css/photon.css">
+    <link rel="stylesheet" href="styles/style.css">
+
+    <!-- Electron Javascript -->
+    <!-- <script src="app.js" charset="utf-8"></script> -->
+</head>
+
+<body>
+    <div class="window">
+        <!--Header-->
+        <header class="toolbar toolbar-header">
+            <p class="title" style="padding: 5px; font-weight: bold; font-size: 14px">Colibri 1.0 - Produtos</p>
+            <div class="toolbar-actions">
+                <div class="btn-group">
+                    <button class="btn btn-default" style="padding: 10px">
+                        <span class="icon icon-home" style="margin-right: 3px"></span>
+                        <a href="main.html" role="button" style="margin-top:10px; text-decoration: none; color: black">Home</a>
+                    </button>
+                    <button class="btn btn-default" style="padding: 10px" @click="createProduct()">
+                        <span class="icon icon-plus"></span>
+                        Novo Produto
+                    </button>                    
+                    <!--
+                    <button class="btn btn-default active">
+                        <span class="icon icon-folder"></span>
+                    </button>
+                    <button class="btn btn-default">
+                        <span class="icon icon-popup"></span>
+                    </button>
+                    <button class="btn btn-default">
+                        <span class="icon icon-shuffle"></span>
+                    </button>
+                    -->
+                </div>
+                <!--
+                <button class="btn btn-default">
+                    <span class="icon icon-home icon-text"></span>
+                    Filters
+                </button>
+                <button class="btn btn-default btn-dropdown pull-right">
+                    <span class="icon icon-megaphone"></span>
+                </button>
+                -->
+            </div>
+        </header>
+        <!--Content-->
+        <div class="window-content">
+            <div class="pane-group">
+                <div class="pane-sm sidebar">
+                    <nav class="nav-group">
+                        <h5 class="nav-group-title">Menu</h5>
+                        <!--
+                        <a class="nav-group-item active">
+                        <span class="icon icon-users"></span>
+                        Clientes
+                        </a>
+                        -->
+                        <span class="nav-group-item">
+                            <span class="icon icon-users"></span>
+                            <a href="index.html" style="text-decoration: none; color: black">
+                                Clientes
+                            </a>
+                        </span>
+                        <span class="nav-group-item">
+                            <span class="icon icon-layout"></span>
+                            <a href="produtos.html" style="text-decoration: none; color: black">
+                                Produtos
+                            </a>
+                        </span>
+                        <span class="nav-group-item">
+                            <span class="icon icon-basket"></span>
+                            <a href="vendas.html" style="text-decoration: none; color: black">
+                                Vendas
+                            </a>
+                        </span>
+                        <span class="nav-group-item">
+                            <span class="icon icon-tools"></span>
+                            <a href="configuracoes.html" style="text-decoration: none; color: black">
+                                Configurações
+                            </a>
+                        </span>
+                        <span class="nav-group-item">
+                            <span class="icon icon-database"></span>
+                            <a href="frente_caixa.html" style="text-decoration: none; color: black">
+                                Frente de Caixa
+                            </a>
+                        </span>
+                    </nav>
+                </div>
+                <div class="pane">
+                    <!--<button class="btn btn-default" style="margin: 10px" @click="createClient()">Criar novo cliente</button>-->
+                    <table class="table table-striped" id="font-table">
+                        <thead>
+                            <tr style="font-size: 18px;">
+                                <th>Produto</th>
+                                <th>Preço R$</th>
+                                <th>Quantidade</th>
+                                <th>Código de Barras</th>
+                                <th>Peso Líquido</th>
+                                <th>Peso Bruto</th>
+                                <th>Editar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="produto in produtos">
+                                <td>{{produto.nome}}</td>
+                                <td>R$ {{produto.preco}}</td>
+                                <td>{{produto.quantidade}}</td>
+                                <td>{{produto.cod_barras}}</td>
+                                <td>{{produto.peso_liquido}}</td>
+                                <td>{{produto.peso_bruto}}</td>
+                                <td>
+                                    <button @click="editProduct(produto)" id="font-button" class="btn btn-large btn-primary">Editar</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!--Footer-->
+        <footer class="toolbar toolbar-footer">
+            <h1 class="title">Focux - Todos os direitos reservados ®</h1>
+        </footer>
+    </div>
+
+    <div id="modal" v-if="openModal">
+        <div class="wrap">
+            <form id="cadastro-clientes" class="pane-body">
+                <h3 v-if="mode=='cadastro'">
+                    <strong>Cadastro de Produtos</strong>
+                </h3>
+                <h3 v-if="mode=='edicao'">
+                    <strong>Edição de Clientes</strong>
+                </h3>
+                <hr/>
+                <div class="form-group">
+                    <input id="nome" type="text" class="form-control" v-model="produto.nome" placeholder="Nome">
+                    <br />
+                    <br />
+                    <input id="preco" type="text" class="form-control" v-model="produto.preco" placeholder="Preço">
+                    <br />
+                    <br />
+                    <input id="quantidade" type="text" class="form-control" v-model="produto.quantidade" placeholder="Quantidade">
+                    <br />
+                    <br />
+                    <input id="cod_barras" type="text" class="form-control" v-model="produto.cod_barras" placeholder="Código de Barras">
+                    <br />
+                    <br />
+                    <input id="peso_liquido" type="text" class="form-control" v-model="produto.peso_liquido"
+                        placeholder="Peso Líquido">
+                    <br />
+                    <br />
+                    <input id="peso_bruto" type="text" class="form-control" v-model="produto.peso_bruto" placeholder="Peso Bruto">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-large btn-negative" @click="openModal=false">Fechar</button>
+                    <button type="button" class="btn btn-large btn-primary" @click="productStoreOrUpdate()">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        var loki = require("lokijs");
+        var db = new loki("loki.json");
+        var read = require('read-file-utf8');
+        var data = read('./loki.json');
+        db.loadJSON(data);
+        window.Vue = require('vue');
+
+        console.log('========Load dos Produtos========');
+        console.log('Tipo: ' + typeof db.getCollection('produtos'));
+        console.log('Collection: ' + db.getCollection('produtos'));
+        console.log('========Load dos Produtos========');
+
+        if (db.getCollection('produtos') == null) {
+            var products = db.addCollection('produtos');
+            db.save();
+            alert('Coleção de produtos criada com sucesso...');
+        }
+
+        var produtos = db.getCollection('produtos');
+
+        new Vue({
+            el: 'body',
+            data: {
+                produtos: [],
+                mode: '',
+                produto: {
+                    nome: '',
+                    preco: '',
+                    quantidade: '',
+                    cod_barras: '',
+                    peso_liquido: '',
+                    peso_bruto: ''
+                },
+                openModal: false
+            },
+            ready: function () {
+                this.mode = 'edicao';
+                this.produtos = produtos.data;
+                console.log('==========Dados do Produtos========');
+                console.log(this.produtos);
+                console.log('==========Dados do Produtos========');
+            },
+            methods: {
+                editProduct: function (product) {
+                    this.openModal = true;
+                    this.produto = product
+                },
+                createProduct: function () {
+                    this.mode = 'cadastro';
+                    this.openModal = true;
+                    this.produto = {
+                        nome: '',
+                        preco: '',
+                        quantidade: '',
+                        cod_barras: '',
+                        peso_liquido: '',
+                        peso_bruto: ''
+                    };
+                },
+                productStoreOrUpdate: function () {
+                    if (typeof this.produto.$loki !== 'undefined') {
+                        produtos.update(this.produto);
+                    } else {
+                        produtos.insert(this.produto);
+                    }
+                    db.save();
+                    this.openModal = false;
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

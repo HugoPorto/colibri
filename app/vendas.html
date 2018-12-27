@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Colibri 1.0.0</title>
+    <meta charset="utf-8">
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="photon/css/photon.css">
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="stylesheet" href="styles/vendas.css">
+    
+    <!-- Electron Javascript -->
+    <!-- <script src="app.js" charset="utf-8"></script> -->
+</head>
+
+<body>
+    <div class="window">
+        <!--Header-->
+        <header class="toolbar toolbar-header">
+            <p class="title" style="padding: 5px; font-weight: bold; font-size: 14px">Colibri 1.0 - Vendas</p>
+            <div class="toolbar-actions">
+                <div class="btn-group">
+                    <button class="btn btn-default" style="padding: 10px">
+                        <span class="icon icon-home" style="margin-right: 3px"></span>
+                        <a href="main.html" role="button" style="margin-top:10px; text-decoration: none; color: black">Home</a>
+                    </button>
+                    <button class="btn btn-default" style="padding: 10px" @click="createSale()">
+                        <span class="icon icon-plus"></span>
+                        Novo Venda
+                    </button>
+                    <button class="btn btn-default" style="padding: 10px" @click="saveCloud()">
+                        <span class="icon icon-cloud" style="margin-right: 3px"></span>
+                        Salvar em Nuvem
+                    </button>
+                </div>
+            </div>
+        </header>
+        <!--Content-->
+        <div class="window-content">
+            <div class="pane-group">
+                <div class="pane-sm sidebar">
+                    <nav class="nav-group">
+                        <h5 class="nav-group-title">Menu</h5>
+                        <span class="nav-group-item">
+                            <span class="icon icon-users"></span>
+                            <a href="index.html" style="text-decoration: none; color: black">
+                                Clientes
+                            </a>
+                        </span>
+                        <span class="nav-group-item">
+                            <span class="icon icon-layout"></span>
+                            <a href="produtos.html" style="text-decoration: none; color: black">
+                                Produtos
+                            </a>
+                        </span>
+                        <span class="nav-group-item">
+                            <span class="icon icon-basket"></span>
+                            <a href="vendas.html" style="text-decoration: none; color: black">
+                                Vendas
+                            </a>
+                        </span>
+                        <span class="nav-group-item">
+                            <span class="icon icon-tools"></span>
+                            <a href="configuracoes.html" style="text-decoration: none; color: black">
+                                Configurações
+                            </a>
+                        </span>
+                        <span class="nav-group-item">
+                            <span class="icon icon-database"></span>
+                            <a href="frente_caixa.html" style="text-decoration: none; color: black">
+                                Frente de Caixa
+                            </a>
+                        </span>
+                    </nav>
+                </div>
+                <div class="pane">
+                    <table class="table table-striped" id="font-table">
+                        <thead>
+                            <tr style="font-size: 18px;">
+                                <th>Cliente</th>
+                                <th>Produto</th>
+                                <th>Preço Unitário</th>
+                                <th>Quantidade</th>
+                                <th>Total</th>
+                                <th>Editar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="venda in vendas">
+                                <td>{{venda.cliente}}</td>
+                                <td>{{venda.produto}}</td>
+                                <td>R$ {{venda.preco_unitario}}</td>
+                                <td>{{venda.quantidade}}</td>
+                                <td>R$ {{venda.quantidade*venda.preco_unitario}}</td>
+                                <td>
+                                    <button @click="editSale(venda)" id="font-button" class="btn btn-large btn-default">Editar</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!--Footer-->
+        <footer class="toolbar toolbar-footer">
+            <h1 class="title">Focux - Todos os direitos reservados ®</h1>
+        </footer>
+    </div>
+
+    <div id="modal" v-if="openModal">
+        <div class="wrap">
+            <form id="cadastro-clientes" class="pane-body">
+                <h3 v-if="mode=='cadastro'">
+                    <strong>Cadastro de Vendas</strong>
+                </h3>
+                <h3 v-if="mode=='edicao'">
+                    <strong>Edição de Vendas</strong>
+                </h3>
+                <hr/>
+                <div class="form-group">
+                    <select v-model="venda.cliente" class="form-control">
+                        
+                        <option value="{{c.nome}}" v-for="c in clientes">{{c.nome}}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <select v-model="venda.produto" class="form-control">                        
+                        <option value="{{p.nome}}" v-for="p in produtos">{{p.nome}}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <input v-if="mode=='edicao'" id="preco" type="text" class="form-control" v-model="venda.preco_unitario"
+                        placeholder="Preço">
+                </div>
+                <div class="form-group">
+                    <input id="quantidade" type="text" class="form-control" v-model="venda.quantidade" placeholder="Quantidade">
+                </div>
+                <hr/>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-large btn-negative" @click="openModal=false">Fechar</button>
+                    <button type="button" class="btn btn-large btn-primary" @click="saleStoreOrUpdate()">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        var loki = require("lokijs");
+        var db = new loki("loki.json");
+        var read = require('read-file-utf8');
+        var data = read('./loki.json');
+        db.loadJSON(data);
+        window.Vue = require('vue');
+
+        console.log('========Load dos Vendas========');
+        console.log('Tipo: ' + typeof db.getCollection('vendas'));
+        console.log('Collection: ' + db.getCollection('vendas'));
+        console.log('========Load dos Vendas========');
+
+        if (db.getCollection('vendas') == null) {
+            var vendas = db.addCollection('vendas');
+            db.save();
+            alert('Coleção de vendas criada com sucesso...');
+        }
+
+        var vendas = db.getCollection('vendas');
+        var clientes = db.getCollection('clientes');
+        var produtos = db.getCollection('produtos');
+
+        new Vue({
+            el: 'body',
+            data: {
+                vendas: [],
+                clientes: [],
+                produtos: [],
+                mode: '',
+                venda: {
+                    clientes: '',
+                    produtos: '',
+                    preco_unitario: 0,
+                    quantidade: 0,
+                },
+                openModal: false
+            },
+            ready: function () {
+                this.mode = 'edicao';
+                this.vendas = vendas.data;
+                this.clientes = clientes.data;
+                this.produtos = produtos.data;
+                console.log('==========Dados das Vendas========');
+                console.log(this.vendas);
+                console.log('==========Dados das Vendas========');
+                console.log('==========Dados das Clientes========');
+                console.log(this.clientes);
+                console.log('==========Dados das Clientes========');
+                console.log('==========Dados das Produtos========');
+                console.log(this.produtos);
+                console.log('==========Dados das Produtos========');
+            },
+            methods: {
+                editSale: function (venda) {
+                    this.openModal = true;
+                    this.venda = venda
+
+                    console.log(this.venda);
+                },
+                createSale: function () {
+                    this.mode = 'cadastro';
+                    this.openModal = true;
+                    this.venda = {
+                        cliente: this.clientes,
+                        produto: this.produtos,
+                        preco_unitario: '',
+                        quantidade: '',
+                    };
+                },
+                saleStoreOrUpdate: function () {
+                    if (typeof this.venda.$loki !== 'undefined') {
+                        vendas.update(this.venda);
+                    } else {
+                        this.venda.preco_unitario = produtos.find({ nome: this.venda.produto })[0].preco;
+                        vendas.insert(this.venda);
+                    }
+                    db.save();
+                    this.openModal = false;
+                },
+                saveCloud: function () {
+                    var mysql = require("mysql");
+
+                    var connection = mysql.createConnection({
+                        host: "162.241.2.118",
+                        user: "focuxme_erp",
+                        password: "1423colibri",
+                        database: "focuxme_colibrierp"
+                    });
+
+                    connection.connect((err) => {
+                        if (err) {
+                            return console.log(err.stack);
+                        }
+
+                        console.log("Conexão estabelecida com sucesso...");
+                    });
+
+                    for (let v = 0; v < this.vendas.length; v++) {
+
+                        queryString = 'INSERT INTO vendas(cliente, produto, quantidade, preco_unitario) VALUES (' + '"' + this.vendas[v].cliente + '",' + '"' + this.vendas[v].produto + '",' + this.vendas[v].preco_unitario + ',' + this.vendas[v].quantidade + ' );';
+                        console.log(queryString);
+
+                        connection.query(queryString, (err, rows, fields) => {
+                            if (err) {
+                                return console.log(" Aconteceu um erro ao consultar os dados...");
+                            }
+
+                            console.log(rows);
+
+                        });
+                    }
+
+                    connection.end(() => {
+                        console.log("Conexão fechada com sucesso...");
+                    });
+
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
